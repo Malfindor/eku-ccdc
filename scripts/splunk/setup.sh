@@ -153,10 +153,10 @@ chmod +x /bin/gemini
 echo "Installing Arbiter SIM..."
 bash $repo_root/scripts/linux/Arbiter/install.sh
 echo "Setting up firewall..."
-mv $repo_root/scripts/linux/nfTablesFirewall/firewall.py /bin/firewall
+mv $repo_root/scripts/linux/firewall/nfTablesFirewall/firewall.py /bin/firewall
 chmod +x /bin/firewall
 echo "Defaults env_keep += \"SSH_CONNECTION SSH_CLIENT SSH_TTY\"" >> /etc/sudoers
-python3 $repo_root/scripts/linux/nfTablesFirewall/setup.py "splunk"
+python3 $repo_root/scripts/linux/firewall/nfTablesFirewall/setup.py "splunk"
 #echo "Beginning remote setup..."
 #manticore -i
 #manticore -gi

@@ -149,7 +149,7 @@ for login in "${loginList[@]}"; do
 	IFS=" " read -ra loginSplit <<< "$login"
 	if [[ "${#loginSplit[@]}" == 5 ]]; then
 		IFS="." read -ra ipList <<< "${loginSplit[4]}"
-		if [[ "${#ipList}" == 4 ]]; then
+		if [[ "${#ipList[@]}" == 4 ]]; then
 			user="${loginSplit[0]}"
 			seat="${loginSplit[1]}"
 			echo "Nice try." | write $user $seat
