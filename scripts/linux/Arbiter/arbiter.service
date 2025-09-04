@@ -1,0 +1,13 @@
+[Unit]
+Description=Arbiter Log Forwarding Service
+
+[Service]
+Type=simple
+Restart=on-failure
+Environment="PATH=/sbin:/bin:/usr/sbin:/usr/bin"
+ExecStart=/bin/bash -c '/etc/Arbiter/listener'
+StartLimitInterval=1s
+StartLimitBurst=999
+
+[Install]
+WantedBy=multi-user.target

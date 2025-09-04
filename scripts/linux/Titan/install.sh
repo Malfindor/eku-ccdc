@@ -29,8 +29,14 @@ cat << EOFA > /etc/titan/titan.conf
 #
 #
 # File for the web server's access.log file. Only change this variable if you decide to move the access.log file
-web_server_access.log=$logFile
+WEBSERVER_ACCESS_LOG=$logFile
 # 
+#
+# Information used for monitoring of potential admin panel access
+ALLOWED_IPS=
+# ^ List of IPs that are permitted to access the admin panel. Leave blank to have no whitelist and report all access. Otherwise, enter the IPs in, seperated by commas example: (172.20.241.20,172.20.241.0/24)
+ADMIN_PANEL_PATH=
+# ^ Custom path of the admin panel, otherwise it will monitor for any path that includes "admin"
 EOFA
 systemctl enable titan
 systemctl start titan

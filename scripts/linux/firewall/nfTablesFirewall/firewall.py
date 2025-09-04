@@ -376,6 +376,7 @@ def standMenu():
                 if(length == 4):
                     os.system("nft add rule firewall input ip saddr { "+address+" } accept")
                     os.system("nft add rule firewall output ip daddr { "+address+" } accept")
+                    saveRules()
                     message = (address + " successfully added to whitelist.")
             elif(option.lower() == "blacklist"):
                 y = True
@@ -388,6 +389,7 @@ def standMenu():
                         print("Invalid address. Please re-enter the address or type 'exit' to exit.")
                 if(length == 4):
                     addToBlackList(address)
+                    saveRules()
                     message = address + " successfully added to blacklist."
             elif(option.lower() == "open"):
                 y = True
@@ -423,6 +425,7 @@ def standMenu():
                                 os.system("nft add rule firewall input udp dport { "+service+" } accept")
                                 os.system("nft add rule firewall output udp dport { "+service+" } accept")
                                 os.system("nft add rule firewall output udp sport { "+service+" } accept")
+                    saveRules()
             elif(option.lower() == "delete"):
                 e = True
                 p = True
@@ -585,6 +588,7 @@ def standMenu():
                             removeFromBlackList(address)
                             if(address != "exit"):
                                 message = address + " successfully removed from blacklist."
+                saveRules()
             elif(option.lower() == "panic"):
                 currentPan = False
                 p = False
@@ -1179,6 +1183,8 @@ def getFileCont(file):
     command = "cat " + file
     fileCont = str(subprocess.check_output(command, shell=True))
     return fileCont[2:(len(fileCont)-1)]
+def saveRules():
+    os.system("nft list ruleset > /etc/nftables.conf")
 def NormHelp():
     return("""
 Firewall interface for linux machines using nftables. Written for use by EKU's CCDC team in practice and live environments.

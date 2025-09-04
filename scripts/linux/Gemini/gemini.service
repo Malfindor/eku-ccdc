@@ -1,11 +1,11 @@
 [Unit]
-Description=Gemini system integrity service
+Description=Gemini Module Controller Service
 
 [Service]
 Type=simple
 Restart=on-failure
 Environment="PATH=/sbin:/bin:/usr/sbin:/usr/bin"
-ExecStart=/bin/bash -c '/etc/gemini/core'
+ExecStart=/bin/bash -c '/etc/gemini/controller'
 StartLimitInterval=1s
 StartLimitBurst=999
 

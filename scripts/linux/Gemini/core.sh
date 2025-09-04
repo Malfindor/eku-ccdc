@@ -152,7 +152,7 @@ for login in "${loginList[@]}"; do
 		if [[ "${#ipList[@]}" == 4 ]]; then
 			user="${loginSplit[0]}"
 			seat="${loginSplit[1]}"
-			echo "Nice try." | write $user $seat
+			echo "These are not the machines you are looking for." | write $user $seat
 			pkill -KILL -t $seat
 			date="${loginSplit[2]}"
 			time="${loginSplit[3]}"

@@ -1,0 +1,15 @@
+[Unit]
+Description=Listener for the Manticore SOAR system
+
+[Service]
+Type=simple
+Restart=on-failure
+User=manticore
+Group=manticore
+Environment="PATH=/sbin:/bin:/usr/sbin:/usr/bin"
+ExecStart=sudo /bin/manticoreListener
+StartLimitInterval=1s
+StartLimitBurst=999
+
+[Install]
+WantedBy=multi-user.target

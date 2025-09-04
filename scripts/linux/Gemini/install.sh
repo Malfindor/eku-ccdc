@@ -2,9 +2,20 @@
 repo_root=$(git rev-parse --show-toplevel)
 mkdir /etc/gemini
 mkdir /.quarantine
+chmod 000 /.quarantine
 mv "$repo_root/scripts/linux/Gemini/core.sh" /etc/gemini/core
 chmod +x /etc/gemini/core
+mv $repo_root/scripts/linux/Gemini/controller.sh /etc/gemini/controller
+chmod +x /etc/gemini/controller
+mv $repo_root/scripts/linux/Gemini/gemini-bin.sh /bin/gemini
+chmod +x /bin/gemini
+mv $repo_root/scripts/linux/Gemini/modules/firewatch/firewatch.sh /etc/gemini/firewatch
+chmod +x /etc/gemini/firewatch
+mv $repo_root/scripts/linux/Gemini/modules/firewatch/firewatch.service /etc/systemd/system/gemini-firewatch.service
+touch /etc/gemini/iptablesrules.bak
+iptables -L -v -n > /etc/gemini/iptablesrules.bak
 mv "$repo_root/scripts/linux/Gemini/gemini.service" /etc/systemd/system/gemini.service
+mv "$repo_root/scripts/linux/Gemini/core.service" /etc/systemd/system/gemini-core.service
 mv "$repo_root/scripts/linux/Gemini/gemini.conf" /etc/gemini/gemini.conf
 systemctl daemon-reload
 if [[ -d /var/www/ ]]; then
@@ -33,6 +44,5 @@ done
 touch /etc/gemini/machine.name
 echo "$machine" >> machine.name
 echo "Gemini installed, but has not started. Please edit the file located at /etc/gemini/gemini.conf and make changes to the settings as needed before starting."
-echo "Once settings have been changed, start Gemini by running these two commands:"
-echo "systemctl enable gemini.service"
-echo "systemctl start gemini.service"
+echo "Once settings have been changed, start Gemini by running this command:"
+echo "gemini start"
