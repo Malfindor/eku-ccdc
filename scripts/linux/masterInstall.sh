@@ -5,7 +5,7 @@
 echo "Installing dependencies"
 repo_root=$(git rev-parse --show-toplevel)
 echo "Installing VigilEDR"
-python3 $repo_root/scripts/linux/vigiledr/installer.py -c
+python3 $repo_root/scripts/linux/vigiledr/install.py -c
 echo "Installing Firewall interface"
 bash $repo_root/scripts/linux/firewall/install.sh
 systemctl daemon-reload

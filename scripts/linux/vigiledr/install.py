@@ -32,8 +32,8 @@ def beginClientInstall():
     os.rename('./configCheck.py', '/usr/local/vigil/configCheck.py')
     os.rename('./vigil-manager.service', '/etc/systemd/system/vigil.service')
     os.system('systemctl daemon-reload')
-    os.system('systemctl enable vigil.service')
-    os.system('systemctl start vigil.service')
+    #os.system('systemctl enable vigil.service')
+    #os.system('systemctl start vigil.service')
 
 def beginServerInstall():
     print("Beginning Vigil manager installation", flush=True)

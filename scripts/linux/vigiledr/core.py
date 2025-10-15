@@ -3,12 +3,15 @@ from time import sleep
 import os
 import threading
 import signal
-from typing import Union, Sequence
 from systemd.daemon import notify
 from datetime import datetime
 
+try:
+    string_types = (basestring,)
+except NameError:
+    string_types = (str,)   
 wd_usec = os.getenv("WATCHDOG_USEC")
-interval = max(int(int(wd_usec)/2/1_000_000), 1) if wd_usec else None
+interval = max(int(int(wd_usec)/2000000), 1) if wd_usec else None
 stop = False
 allowedUsers = []
 blacklistedUsers = []
@@ -63,8 +66,8 @@ def checkProcesses():
     for process in processesSplit:
         for flag in reverseShellFlags:
             if flag in process:
-                processConts = process.split(" ")
-                pid = int(processConts[1])
+                processConts = process.split()
+                pid = processConts[1]
                 os.kill(pid, signal.SIGTERM)
                 triggerAlert("Potential reverse shell detected and killed: " + process)
 
@@ -72,6 +75,7 @@ def checkIPs():
     connections = getOutputOf("who")
     connectionsSplit = connections.split("\n")
     for connection in connectionsSplit:
+        connection = connection.split()
         if len(connection) >= 5:
             ipSplit = connection[4].split('.')
             if (len(ipSplit) == 4) and (connection[4] not in allowedIPs):
@@ -102,7 +106,7 @@ def checkServices():
         for blacklistedService in blacklistedServices:
             if blacklistedService in service:
                 triggerAlert("Blacklisted service found and stopped: " + service)
-                serviceName = service.split(" ")[0]
+                serviceName = service.split()[0]
                 os.system("systemctl stop " + serviceName)
                 os.system("systemctl disable " + serviceName)
                 os.system("mv /etc/systemd/system/" + serviceName + " /root/quarantined_services/")
@@ -113,33 +117,31 @@ def triggerAlert(alert):
     f.write('[' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '] - ' + alert + "\n")
     f.close()
 
-def getOutputOf(command: Union[str, Sequence[str]]) -> str:
+def getOutputOf(command):
     """
     Run a command and return stdout (or stderr if the command fails).
     Accepts either a shell string or a list argv.
     """
+    # shell=True if a single shell string; False if a list/tuple argv
+    shell = isinstance(command, string_types)
+
     try:
-        if isinstance(command, str):
-            result = subprocess.run(
-                command,
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True,
-                check=True,
-            )
-        else:
-            result = subprocess.run(
-                command,
-                shell=False,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True,
-                check=True,
-            )
-        return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        return (e.stdout or e.stderr or "").strip()
+        proc = subprocess.Popen(
+            command,
+            shell=shell,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True  # text mode; works on Py2/3
+        )
+        out, err = proc.communicate()
+
+        if proc.returncode != 0:
+            return (err or "").strip()
+        return (out or "").strip()
+
+    except OSError as e:
+        # e.g., command not found
+        return str(e).strip()
 
 def processConfigFile():
     f = open("/etc/vigil.conf", "r")
