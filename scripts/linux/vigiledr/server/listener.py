@@ -2,19 +2,22 @@
 import socket
 import threading
 from datetime import datetime
-import mysql.connnector
+import mysql.connector
 
 def parseConf():
     conf = ["127.0.0.1", 5678]
-    f = open('/etc/vigil.conf', 'r')
+    f = open('/etc/vigil/server.conf', 'r')
     confContents = f.read()
     confContentsSplit = confContents.split('\n')
     for line in confContentsSplit:
-        if not line[0] == '#':
-            if line.split('=')[0] == 'bind_ip':
-                conf[0] = line.split('=')[1][1:-1]
-            elif line.split('=')[0] == 'bind_port':
-                conf[1] = line.split('=')[1]
+        if not len(line) == 0:
+            if not line[0] == '#':
+                if line.split('=')[0] == 'listen_ip':
+                    conf[0] = line.split('=')[1]
+                elif line.split('=')[0] == 'event_port':
+                    conf[1] = line.split('=')[1]
+                elif line.split('=')[0] == 'sql_user':
+                    global sqlUser; sqlUser = line.split('=')[1]
     return conf
 
 def handleMessage(message, agent):
@@ -36,7 +39,7 @@ def saveToSQL(message, agent):
         print("Invalid datetime format:", raw_time)
         return
 
-    conn = mysql.connector.connect(user="user", password="pass", host="localhost", database="Vigil_DB")
+    conn = mysql.connector.connect(user=sqlUser, password="", host="localhost", database="Vigil_DB")
     cursor = conn.cursor()
 
     query = """
@@ -57,7 +60,7 @@ def saveToSQL(message, agent):
     cursor.close()
     conn.close()
 def refreshHeardFromTime(agent):
-    conn = mysql.connector.connect(user="user", password="pass", host="localhost", database="Vigil_DB")
+    conn = mysql.connector.connect(user=sqlUser, password="", host="localhost", database="Vigil_DB")
     cursor = conn.cursor()
 
     sql = """
@@ -83,6 +86,6 @@ def run():
         data = conn.recv(4096)
         if data:
             message = data.decode(errors="ignore")
-            threading.Thread(target=handleMessage, daemon=True).start() # Add variables 
+            threading.Thread(target=handleMessage, args=(message, agent), daemon=True).start()
         conn.close()
 run()

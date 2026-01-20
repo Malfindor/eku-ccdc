@@ -3,40 +3,34 @@ from time import sleep
 import os
 import threading
 import signal
-from systemd.daemon import notify
 from datetime import datetime
+import socket
+import re
 
-try:
-    string_types = (basestring,)
-except NameError:
-    string_types = (str,)   
-wd_usec = os.getenv("WATCHDOG_USEC")
-interval = max(int(int(wd_usec)/2000000), 1) if wd_usec else None
-stop = False
 allowedUsers = []
 blacklistedUsers = []
 allowedIPs = []
 blacklistedServices = []
-reverseShellFlags = ["python -c", "python3 -c", "/bin/sh -i", "/bin/bash -i", "nc * -e", "ncat * -e", "socat * EXEC"]
+reverseShellFlags = [r"python3?\s+-c\b", r"/bin/(ba)?sh\s+-i\b", r"nc\s+.*-e\b", r"ncat\s+.*-e\b", r"socat\s+.*EXEC\b"]
 
-def handle_sigterm(signum, frame):
-    global stop; stop = True
-
-signal.signal(signal.SIGTERM, handle_sigterm)
-signal.signal(signal.SIGINT, handle_sigterm)
-
-notify("READY=1")
-notify("STATUS=Initializing…")
-
-def pump():
-    while not stop and interval:
-        notify("WATCHDOG=1")
-        sleep(interval)
-
-threading.Thread(target=pump, daemon=True).start()
+def sendAlert(alert, managerIP, eventPort):
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((managerIP, int(eventPort)))
+        sock.sendall(alert.encode())
+        sock.close()
+    except:
+        notify("STATUS=Failed to send alert to manager: " + alert)
 
 def run():
     processConfigFile()
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((managerIP, int(eventPort)))
+        sock.sendall("checkin".encode())
+        sock.close()
+    except:
+        notify("STATUS=Failed to check in with manager")
     while not stop:
         checkUsers()
         checkProcesses()
@@ -55,21 +49,21 @@ def checkUsers():
         if (not userSplit[0] in allowedUsers):
             if (userSplit[0] in blacklistedUsers) or ((userSplit[2] == '0') or (userSplit[3] == '0')):
                 os.system("userdel " + userSplit[0])
-                triggerAlert("Blacklisted user was found and removed: '" + userSplit[0] + "'")
+                triggerAlert(datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S') + " - Blacklisted user was found and removed: '" + userSplit[0] + "'")
             elif (int(userSplit[2]) >= 1000):
                 os.system("userdel " + userSplit[0])
-                triggerAlert("Unrecognized user was found and removed: '" + userSplit[0] + "'")
+                triggerAlert(datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S') + " - Unrecognized user was found and removed: '" + userSplit[0] + "'")
 
 def checkProcesses():
     processes = getOutputOf("ps aux")
     processesSplit = processes.split("\n")
     for process in processesSplit:
         for flag in reverseShellFlags:
-            if flag in process:
+            if re.search(flag, process):
                 processConts = process.split()
                 pid = processConts[1]
-                os.kill(int(pid), signal.SIGTERM)
-                triggerAlert("Potential reverse shell detected and killed: " + process)
+                os.kill(int(pid), signal.SIGKILL)
+                triggerAlert(datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S') + " - Potential reverse shell detected and killed: " + process)
 
 def checkIPs():
     connections = getOutputOf("who")
@@ -86,7 +80,7 @@ def checkIPs():
                 date = connection[2]
                 time = connection[3]
                 remoteIP = connection[4]
-                triggerAlert("Unrecognized IP address '" + remoteIP + "' connected to the system as user '" + user + "' on " + date + " at " + time)
+                triggerAlert(datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S') + " - Unrecognized IP address '" + remoteIP + "' connected to the system as user '" + user + "' on " + date + " at " + time)
 
 def checkCrontab():
     f = open("/etc/crontab", "r")
@@ -94,7 +88,7 @@ def checkCrontab():
     f.close()
     if len(contents) > 0:
         if (contents != "\n"):
-            triggerAlert("Contents found in /etc/crontab:" + contents)
+            triggerAlert(datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S') + " - Contents found in /etc/crontab:" + contents)
             f = open("/etc/crontab", "w")
             f.write("\n")
             f.close()
@@ -105,7 +99,7 @@ def checkServices():
     for service in servicesSplit:
         for blacklistedService in blacklistedServices:
             if blacklistedService in service:
-                triggerAlert("Blacklisted service found and stopped: " + service)
+                triggerAlert(datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S') + " - Blacklisted service found and stopped: " + service)
                 serviceName = service.split()[0]
                 os.system("systemctl stop " + serviceName)
                 os.system("systemctl disable " + serviceName)
@@ -116,6 +110,7 @@ def triggerAlert(alert):
     f = open("/var/log/vigil.log", "a")
     f.write('[' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '] - ' + alert + "\n")
     f.close()
+    threading.Thread(target=sendAlert, args=(alert, managerIP, eventPort), daemon=True).start()
 
 def getOutputOf(command):
     """
@@ -144,7 +139,7 @@ def getOutputOf(command):
         return str(e).strip()
 
 def processConfigFile():
-    f = open("/etc/vigil.conf", "r")
+    f = open("/etc/vigil/agent.conf", "r")
     lines = f.readlines()
     f.close()
     for line in lines:
@@ -166,6 +161,8 @@ def processConfigFile():
                 servicesSplit = lineSplit[1].split(",")
                 for service in servicesSplit:
                     blacklistedServices.append(service.strip())
-
-if __name__ == "__main__":
-    run()
+            elif lineSplit[0] == "manager_ip":
+                global managerIP; managerIP = lineSplit[1].strip()
+            elif lineSplit[0] == "event_port":
+                global eventPort; eventPort = int(lineSplit[1].strip())
+run()

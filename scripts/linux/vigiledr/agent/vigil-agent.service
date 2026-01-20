@@ -1,5 +1,5 @@
 [Unit]
-Description=Core VigilEDR service
+Description=VigilEDR Agent Service
 After=network-online.target
 Wants=network-online.target
 
@@ -8,9 +8,10 @@ Type=notify
 Restart=on-failure
 Environment="PATH=/sbin:/bin:/usr/sbin:/usr/bin"
 ExecCondition=/usr/bin/python3 /usr/local/vigil/configCheck.py
-ExecStart=/usr/bin/python3 /usr/local/vigil/core.py
+ExecStart=/usr/bin/python3 /usr/local/vigil/manager.py
 StartLimitInterval=1s
 StartLimitBurst=999
+NotifyAccess=All
 
 [Install]
 WantedBy=multi-user.target
