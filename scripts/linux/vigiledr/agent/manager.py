@@ -30,7 +30,7 @@ sleep(2)
 notify("STATUS=Local agent started with PID: {}".format(r.pid))
 
 notify("STATUS=Starting agent listener...")
-r2 = subprocess.Popen(["python3", "/usr/local/vigil/agent-listener.py"])
+r2 = subprocess.Popen(["python3", "/usr/local/vigil/listener.py"])
 sleep(2)
 notify("STATUS=Agent listener started with PID: {}".format(r2.pid))
 

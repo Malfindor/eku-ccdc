@@ -6,12 +6,21 @@ import signal
 from datetime import datetime
 import socket
 import re
+from xml.dom.minicompat import StringTypes
 
 allowedUsers = []
 blacklistedUsers = []
 allowedIPs = []
 blacklistedServices = []
 reverseShellFlags = [r"python3?\s+-c\b", r"/bin/(ba)?sh\s+-i\b", r"nc\s+.*-e\b", r"ncat\s+.*-e\b", r"socat\s+.*EXEC\b"]
+
+stop = False
+
+def handle_sigterm(signum, frame):
+    global stop; stop = True
+
+signal.signal(signal.SIGTERM, handle_sigterm)
+signal.signal(signal.SIGINT, handle_sigterm)
 
 def sendAlert(alert, managerIP, eventPort):
     try:
@@ -20,7 +29,9 @@ def sendAlert(alert, managerIP, eventPort):
         sock.sendall(alert.encode())
         sock.close()
     except:
-        notify("STATUS=Failed to send alert to manager: " + alert)
+        f = open("/var/log/vigil.log", "a")
+        f.write('[' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '] - ' + "Failed to send alert to manager\n")
+        f.close()
 
 def run():
     processConfigFile()
@@ -30,7 +41,9 @@ def run():
         sock.sendall("checkin".encode())
         sock.close()
     except:
-        notify("STATUS=Failed to check in with manager")
+        f = open("/var/log/vigil.log", "a")
+        f.write('[' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '] - ' + "Failed to check in with manager\n")
+        f.close()
     while not stop:
         checkUsers()
         checkProcesses()
@@ -38,7 +51,6 @@ def run():
         checkCrontab()
         checkServices()
         sleep(10)
-    notify("STOPPING=1")
 
 def checkUsers():
     f = open("/etc/passwd", "r")
@@ -118,7 +130,7 @@ def getOutputOf(command):
     Accepts either a shell string or a list argv.
     """
     # shell=True if a single shell string; False if a list/tuple argv
-    shell = isinstance(command, string_types)
+    shell = isinstance(command, StringTypes)
 
     try:
         proc = subprocess.Popen(
