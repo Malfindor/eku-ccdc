@@ -1,6 +1,8 @@
 import os
 import sys
 import argparse
+from git import Repo, InvalidGitRepositoryError
+from pathlib import Path
 
 def printHelp():
     print("""
@@ -28,12 +30,12 @@ def beginClientInstall():
     os.system('mkdir -p /root/quarantined_services')
     os.system("touch /var/log/vigil.log")
     os.system("mkdir /etc/vigil")
-    os.rename('./agent/agent.conf', '/etc/vigil/agent.conf')
-    os.rename('./agent/core.py', '/usr/local/vigil/core.py')
-    os.rename('./agent/manager.py', '/usr/local/vigil/manager.py')
-    os.rename('./agent/agent-listener.py', '/usr/local/vigil/listener.py')
-    os.rename('./agent/configCheck.py', '/usr/local/vigil/configCheck.py')
-    os.rename('./agent/vigil-agent.service', '/etc/systemd/system/vigil.service')
+    os.rename(f'{repo_root}/agent/agent.conf', '/etc/vigil/agent.conf')
+    os.rename(f'{repo_root}/agent/core.py', '/usr/local/vigil/core.py')
+    os.rename(f'{repo_root}/agent/manager.py', '/usr/local/vigil/manager.py')
+    os.rename(f'{repo_root}/agent/agent-listener.py', '/usr/local/vigil/listener.py')
+    os.rename(f'{repo_root}/agent/configCheck.py', '/usr/local/vigil/configCheck.py')
+    os.rename(f'{repo_root}/agent/vigil-agent.service', '/etc/systemd/system/vigil.service')
     os.system('systemctl daemon-reload')
     #os.system('systemctl enable vigil.service')
     #os.system('systemctl start vigil.service')
@@ -65,18 +67,18 @@ def beginServerInstall():
     os.system("touch /var/log/vigil.log")
     os.system("touch /var/log/vigil_server.log")
     os.system("mkdir /etc/vigil")
-    os.rename('./agent/agent.conf', '/etc/vigil/agent.conf')
-    os.rename('./server/server.conf', '/etc/vigil/server.conf')
-    os.rename('./agent/core.py', '/usr/local/vigil/core.py')
-    os.rename('./server/server-config-check.py', '/usr/local/vigil/configCheck.py')
-    os.rename('./server/agent-handler.py', '/usr/local/vigil/agentHandler.py')
-    os.rename('./server/manager.py', '/usr/local/vigil/manager.py')
-    os.rename('./server/listener.py', '/usr/local/vigil/listener.py')
-    os.rename('./server/event-viewer.py', '/bin/vigil')
+    os.rename(f'{repo_root}/agent/agent.conf', '/etc/vigil/agent.conf')
+    os.rename(f'{repo_root}/server/server.conf', '/etc/vigil/server.conf')
+    os.rename(f'{repo_root}/agent/core.py', '/usr/local/vigil/core.py')
+    os.rename(f'{repo_root}/server/server-config-check.py', '/usr/local/vigil/configCheck.py')
+    os.rename(f'{repo_root}/server/agent-handler.py', '/usr/local/vigil/agentHandler.py')
+    os.rename(f'{repo_root}/server/manager.py', '/usr/local/vigil/manager.py')
+    os.rename(f'{repo_root}/server/listener.py', '/usr/local/vigil/listener.py')
+    os.rename(f'{repo_root}/server/event-viewer.py', '/bin/vigil')
     os.system('chmod +x /bin/vigil')
-    os.rename('./server/control-panel.py', '/bin/vigilAdmin')
+    os.rename(f'{repo_root}/server/control-panel.py', '/bin/vigilAdmin')
     os.system('chmod +x /bin/vigilAdmin')
-    os.rename('./server/vigil-manager.service', '/etc/systemd/system/vigil.service')
+    os.rename(f'{repo_root}/server/vigil-manager.service', '/etc/systemd/system/vigil.service')
     os.system('restorecon -v /etc/systemd/system/vigil.service') # SELinux support
     os.system('systemctl daemon-reload')
 
@@ -88,11 +90,21 @@ if (len(sys.argv) == 1):
     printHelp()
     exit(0)
 
+global repo_root
+try:
+    repo_root = Path(
+        Repo(search_parent_directories=True).working_tree_dir
+    )
+except InvalidGitRepositoryError:
+    repo_root = None
+
 parser = argparse.ArgumentParser(add_help=False)
 parser.add_argument('-h', '--help', action='store_true')
 parser.add_argument('-c', '--client', action='store_true')
 parser.add_argument('-s', '--server', action='store_true')
+parser.add_argument('--repo-root', type=str, default=repo_root)
 args = parser.parse_args()
+repo_root = args.repo_root
 if args.help:
     printHelp()
     exit(0)

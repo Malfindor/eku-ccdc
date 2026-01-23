@@ -36,7 +36,10 @@ EOFA
 /opt/splunk/bin/splunk start
 echo "Splunk accounts reset."
 echo "Installing VigilEDR..."
-python3 $repo_root/scripts/linux/vigil/installer.py -s
+yum install -y python3 python3-pip
+pip3 install GitPython
+python3 $repo_root/scripts/linux/vigil/installer.py -s --repo-root $repo_root/scripts/linux/vigiledr
+echo "VigilEDR installation complete."
 echo "Setting up firewall..."
 mv $repo_root/scripts/linux/firewall/nfTablesFirewall/firewall.py /bin/firewall
 chmod +x /bin/firewall
