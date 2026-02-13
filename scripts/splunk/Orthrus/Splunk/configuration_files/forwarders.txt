@@ -1,0 +1,11 @@
+Windows:
+
+splunkforwarder-10.0.1-c486717c322b-windows-x64.msi "https://download.splunk.com/products/universalforwarder/releases/10.0.1/windows/splunkforwarder-10.0.1-c486717c322b-windows-x64.msi"
+
+CentOS/Fedora:
+
+splunkforwarder-10.0.1-c486717c322b.x86_64.rpm "https://download.splunk.com/products/universalforwarder/releases/10.0.1/linux/splunkforwarder-10.0.1-c486717c322b.x86_64.rpm"
+
+Debian/Ubuntu:
+
+splunkforwarder-10.0.1-c486717c322b-linux-amd64.deb "https://download.splunk.com/products/universalforwarder/releases/10.0.1/linux/splunkforwarder-10.0.1-c486717c322b-linux-amd64.deb"

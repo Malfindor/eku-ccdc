@@ -1,0 +1,9 @@
+command to install python on windows from terminal:
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Invoke-WebRequest https://www.python.org/ftp/python/3.12.2/python-3.12.2-amd64.exe -OutFile python.exe
+
+command to pull github from terminal
+Invoke-webRequest -Uri "https://raw.githubusercontent.com/CHristian-K9/Orthrus/main/Windows/script.py" -Headers @{ "User-Agent" = "Mozilla/5.0" } -OutFile "script.py"
+
+python location:
+C:\Users\Administrator\AppData\Local\Programs\Python\Python312
